@@ -1,0 +1,6 @@
+# 주식 분석 프로그램 - Flet + Yahoo Finance (데스크톱/Android APK)
+flet>=0.21.0
+yfinance>=0.2.36
+pandas>=2.0.0
+plotly>=5.18.0
+certifi
