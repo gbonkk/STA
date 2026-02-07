@@ -1,52 +1,62 @@
 name: Build Android APK
 
+# 버튼을 눌러서 실행하는 모드 (에러 아님!)
 on:
-  push:
-    branches: [ "main" ]
-  workflow_dispatch: # 수동 실행 버튼 추가
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    # 1. 내 코드 가져오기
+    # 1. 코드 가져오기
     - uses: actions/checkout@v3
 
-    # 2. Java 17 설치 (안드로이드 빌드 핵심!)
+    # 2. Java 17 설치 (안드로이드 필수)
     - name: Set up JDK 17
       uses: actions/setup-java@v3
       with:
         java-version: '17'
         distribution: 'temurin'
 
-    # 3. 파이썬 설치
+    # 3. 안드로이드 SDK 도구 설치
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+
+    # 4. 파이썬 3.11 설치
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
 
-    # 4. 필수 라이브러리 설치 (Flet, yfinance 등)
+    # 5. 필수 라이브러리 설치 (Cython 추가)
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
+        pip install Cython
         pip install flet
-        # requirements.txt가 있으면 설치, 없으면 직접 설치
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        # 혹시 requirements.txt가 비어있을까봐 강제 설치
         pip install yfinance plotly pandas
 
-    # 5. Flutter SDK 설치 (Flet이 사용함)
+    # 6. Flutter 설치
     - name: Setup Flutter
       uses: subosito/flutter-action@v2
       with:
         flutter-version: '3.19.0'
 
-    # 6. APK 빌드 (오류 내용을 자세히 보기 위해 --verbose 추가)
+    # 7. [핵심] 안드로이드 라이선스 강제 동의
+    - name: Accept Android Licenses
+      run: |
+        yes | flutter doctor --android-licenses
+        flutter config --no-analytics
+
+    # 8. 빌드 (로그 자세히 보기 옵션 추가)
     - name: Flet Build APK
       run: |
         flet build apk --verbose
 
-    # 7. 결과물 업로드 (다운로드 가능하게)
+    # 9. 결과물 업로드
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
